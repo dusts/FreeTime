@@ -10,26 +10,23 @@
         <TabControl TabStripPlacement="Top">
             <TabItem Header="General">
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="110*"/>
-                        <ColumnDefinition Width="263*"/>
-                    </Grid.ColumnDefinitions>
-                    <Label x:Name="label_SubredditName" Content="Subreddit Name"  Margin="0,2,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    <TextBox x:Name="textB_SubredditInput" Text="wallpapers" Margin="102,7,0,0" TextChanged="textB_SubredditInput_TextChanged" HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="Wrap" MaxLength="20" Grid.ColumnSpan="2"/>
-                    <Button x:Name="btn_CheckSubreddit" Content="Check" Margin="100,51,0,0" RenderTransformOrigin="0.613,-0.762" Click="btn_CheckSubreddit_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Height="32" Width="78" Grid.ColumnSpan="2"/>
-                    <ListBox x:Name="listBox_FromTime" Margin="13,121,0,0" SelectionChanged="listBox_FromTime_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Top" >
+                    <Label x:Name="label_SubredditName" Content="Subreddit Name"  Margin="0,2,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26" Width="97"/>
+                    <TextBox x:Name="textB_SubredditInput" Text="wallpapers" Margin="102,7,0,0" TextChanged="textB_SubredditInput_TextChanged" HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="Wrap" MaxLength="20" Height="32" Width="113"/>
+                    <Button x:Name="btn_CheckSubreddit" Content="Check" Margin="13,38,0,0" RenderTransformOrigin="0.613,-0.762" Click="btn_CheckSubreddit_Click" VerticalAlignment="Top" Height="32" HorizontalAlignment="Left" Width="78"/>
+                    <ListBox x:Name="listBox_FromTime" Margin="13,121,0,0" SelectionChanged="listBox_FromTime_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Top" Height="104" Width="57" >
                         <ListBoxItem>Day</ListBoxItem>
                         <ListBoxItem>Week</ListBoxItem>
                         <ListBoxItem>Month</ListBoxItem>
                         <ListBoxItem>Year</ListBoxItem>
                         <ListBoxItem>All</ListBoxItem>
                     </ListBox>
-                    <Label x:Name="label_ListBox_FromTime" Content="Sort Top By" Margin="11,93,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    <Slider x:Name="slider_PostCount" Margin="82,171,0,0" Maximum="50" Minimum="1" SmallChange="0" ValueChanged="slider_PostCount_ValueChanged" TickPlacement="Both" IsSnapToTickEnabled="True" HorizontalAlignment="Left" VerticalAlignment="Top" Width="132" Grid.ColumnSpan="2"/>
-                    <Label x:Name="label_PostCount_Text" Content="How Many Posts To Find" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="79,118,0,0" Grid.ColumnSpan="2"/>
-                    <Label x:Name="label_PostCount_Number" Content="1" HorizontalAlignment="Left" Margin="27,148,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.75,0.462" Width="39" Grid.Column="1"/>
-                    <Button x:Name="btn_SearchSubreddit" Content="Search!"  Width="86" Height="40" Click="btn_SearchSubreddit_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="115,49,0,0" Grid.Column="1"/>
-                    <TextBlock x:Name="textBlock_ErrorMessageForSearchBtn"  Text="" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="120,4,0,0" Width="80" Height="41" TextWrapping="Wrap" Grid.Column="1" />
+                    <Label x:Name="label_ListBox_FromTime" Content="Sort Top By" Margin="11,93,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26" Width="71"/>
+                    <Slider x:Name="slider_PostCount" Margin="82,171,0,0" Maximum="50" Minimum="1" SmallChange="0" ValueChanged="slider_PostCount_ValueChanged" TickPlacement="Both" IsSnapToTickEnabled="True" HorizontalAlignment="Left" VerticalAlignment="Top" Width="132" Height="30"/>
+                    <Label x:Name="label_PostCount_Text" Content="How Many Posts To Find" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="79,118,0,0" Height="26" Width="141"/>
+                    <Label x:Name="label_PostCount_Number" Content="1" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="130,143,0,0" RenderTransformOrigin="1.75,0.462" Width="39" Height="26"/>
+                    <Button x:Name="btn_SearchSubreddit" Content="Search!" Height="40" Click="btn_SearchSubreddit_Click" VerticalAlignment="Top" Margin="265,58,0,0" HorizontalAlignment="Left" Width="87"/>
+                    <TextBlock x:Name="textBlock_ErrorMessageForSearchBtn"  Text="" VerticalAlignment="Top" Margin="254,8,0,0" Height="38" TextWrapping="Wrap" HorizontalAlignment="Left" Width="109" />
+                    <CheckBox x:Name="checkBox_FindNewItems" Content="Should Find New Items, &#xD;&#xA;If You Already Have The &#xD;&#xA;Image?" Margin="99,53,298,159" IsChecked="True"/>
                 </Grid>
             </TabItem>
             <TabItem Header="Preview Images"/>
@@ -38,8 +35,6 @@
                     <TextBlock x:Name="DebugLog" TextWrapping="Wrap"/>
                 </ScrollViewer>
             </TabItem>
-
-
         </TabControl>
     </Grid>
 </Window>

@@ -19,6 +19,9 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using Imgur.API.Models;
+using Imgur.API.Authentication.Impl;
+using Imgur.API.Endpoints.Impl;
 
 namespace RedditImageDownloader
 {
@@ -34,9 +37,9 @@ namespace RedditImageDownloader
         List<Uri> imageUrlList = new List<Uri>();
         public MainWindow()
         {
+            //Redesign with asynchronous in mind
+            //implement filtering by .png .jpg /a/ (albums) etc
             InitializeComponent();
-            
-            //GetTopLinks("wallpapsssser", FromTime.Week);
         }
         public void GetTopLinks(string name, FromTime ft, int howMany)
         {
@@ -47,23 +50,40 @@ namespace RedditImageDownloader
             int newItems = 0;
             foreach (var post in subreddit.GetTop(ft))
             {
-                if (!imageUrlList.Contains(post.Url))
+                if (checkBox_FindNewItems.IsChecked == false)
                 {
-                    DebugLog.Text += post.Title + "\n" + post.Url + "\n";
-                    imageUrlList.Add(post.Url);
                     count++;
+                    if (!imageUrlList.Contains(post.Url))
+                    {
+                        DebugLog.Text += post.Title + "\n" + post.Url + "\n";
+                        imageUrlList.Add(post.Url);
+                        
+                        newItems++;
+                    }
+                    if (count > howMany)
+                    {
+                        DebugLog.Text += $"Found {newItems} new items!";
+                        break;
+                    }
                 }
                 else
                 {
-                    newItems++;
-                }
-                
-                if (count > howMany)
-                {
-                    DebugLog.Text += $"Found {newItems} new items!";
-                    break;
+                    if (!imageUrlList.Contains(post.Url))
+                    {
+                        DebugLog.Text += post.Title + "\n" + post.Url + "\n";
+                        imageUrlList.Add(post.Url);
+                        count++;
+                        newItems++;
+                    }
+                    if (count > howMany)
+                    {
+                        DebugLog.Text += $"Found {newItems} new items!";
+                        break;
+                    }
                 }
             }
+            
+            DebugLog.Text += $"\n";
         }
         public void DownloadImageWithExtension(Uri url, ImageFormat format)
         {
@@ -200,6 +220,23 @@ namespace RedditImageDownloader
                 default:
                     break;
             }
+        }
+    }
+    public class AsyncWrapper
+    {
+        public List<IImage> iimage;
+        public async void dosomething(string token, string albumlink)
+        {
+            Task<IEnumerable<IImage>> getImages = AccessTheWebAsync(token,albumlink);
+            IEnumerable<IImage> image = await getImages;
+            iimage = image.ToList();
+        }
+        async Task<IEnumerable<IImage>> AccessTheWebAsync(string token, string albumlink)
+        {
+            var client = new ImgurClient(token);
+            var endpoint = new AlbumEndpoint(client);
+            var images = await endpoint.GetAlbumImagesAsync(albumlink);
+            return images;
         }
     }
 }
