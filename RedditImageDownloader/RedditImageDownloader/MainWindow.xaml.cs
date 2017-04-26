@@ -22,6 +22,7 @@ using System.Runtime.InteropServices;
 using Imgur.API.Models;
 using Imgur.API.Authentication.Impl;
 using Imgur.API.Endpoints.Impl;
+using System.Windows.Threading;
 
 namespace RedditImageDownloader
 {
@@ -41,8 +42,10 @@ namespace RedditImageDownloader
         public MainWindow()
         {
             //Redesign with asynchronous in mind
+            //Need to create seperate tasks, not overwrite current one
             //implement filtering by .png .jpg /a/ (albums) etc
             InitializeComponent();
+            asyncwrapper.NewLinksFromImgurAlbum += UpdateImageLinksList_NewLinksFromImgurAlbum;
         }
         public void GetTopLinks(string name, FromTime ft, int howMany)
         {
@@ -79,7 +82,7 @@ namespace RedditImageDownloader
                     }
                     if (count > howMany)
                     {
-                        DebugLog.Text += $"Found {newItems} new items!";
+                        DebugLog.Text += $"Found {newItems} new items!\n";
                         break;
                     }
                 }
@@ -100,11 +103,11 @@ namespace RedditImageDownloader
                     {
                         if (uriString.Contains(".jpg"))
                         {
-
+                            DebugLog.Text += "JPG PICTURE \n";
                         }
                         else if (uriString.Contains(".png"))
                         {
-
+                            DebugLog.Text += "PNG PICTURE \n";
                         }
                         else
                         {
@@ -114,12 +117,11 @@ namespace RedditImageDownloader
                     else if (LinkIsAlbum(uriString))
                     {
                         uriString = uriString.Substring(uriString.LastIndexOf('/') + 1);
-                        asyncwrapper.dosomething(ImgurClientID, uriString);
-                        albumImageList = asyncwrapper.iimage;
+                        asyncwrapper.FindImagesInAlbum(ImgurClientID, uriString);
                     }
                     else
                     {
-
+                        DebugLog.Text += "The link is in invalid format! \n";
                     }
                 }
             }
@@ -246,17 +248,41 @@ namespace RedditImageDownloader
                     break;
             }
         }
+        void UpdateImageLinksList_NewLinksFromImgurAlbum(List<IImage> iimageList)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                albumImageList = iimageList;
+                foreach (var item in albumImageList)
+                {
+                    DebugLog.Text += "I ALSO HERE \n";
+                }
+            });
+        }
     }
+    public delegate void NewLinksFromImgurAlbumDelegate(List<IImage> iimageList);
+   
     public class AsyncWrapper
     {
         public List<IImage> iimage;
-        public async void dosomething(string token, string albumlink)
+        string token;
+        string albumlink;
+        public event NewLinksFromImgurAlbumDelegate NewLinksFromImgurAlbum;
+        public void FindImagesInAlbum(string token, string albumlink)
         {
-            Task<IEnumerable<IImage>> getImages = AccessTheWebAsync(token,albumlink);
+            this.token = token;
+            this.albumlink = albumlink;
+            Task task = new Task(dosomething);
+            task.Start();
+        }
+        public async void dosomething()
+        {
+            Task<IEnumerable<IImage>> getImages = AccessTheWebAsync();
             IEnumerable<IImage> image = await getImages;
             iimage = image.ToList();
+            NewLinksFromImgurAlbum(iimage);
         }
-        async Task<IEnumerable<IImage>> AccessTheWebAsync(string token, string albumlink)
+        async Task<IEnumerable<IImage>> AccessTheWebAsync()
         {
             var client = new ImgurClient(token);
             var endpoint = new AlbumEndpoint(client);
