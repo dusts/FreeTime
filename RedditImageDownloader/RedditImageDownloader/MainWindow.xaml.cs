@@ -35,6 +35,9 @@ namespace RedditImageDownloader
         SolidColorBrush black = new SolidColorBrush(Colors.Black);
         FromTime fromtime;
         List<Uri> imageUrlList = new List<Uri>();
+        List<IImage> albumImageList = new List<IImage>();
+        AsyncWrapper asyncwrapper = new AsyncWrapper();
+        string ImgurClientID = "04cc5217fd576cb";
         public MainWindow()
         {
             //Redesign with asynchronous in mind
@@ -57,7 +60,6 @@ namespace RedditImageDownloader
                     {
                         DebugLog.Text += post.Title + "\n" + post.Url + "\n";
                         imageUrlList.Add(post.Url);
-                        
                         newItems++;
                     }
                     if (count > howMany)
@@ -82,8 +84,61 @@ namespace RedditImageDownloader
                     }
                 }
             }
-            
-            DebugLog.Text += $"\n";
+            TheGreatImageFilter(imageUrlList);
+            DebugLog.Text += $"\n\n";
+        }
+        public void TheGreatImageFilter(List<Uri> uriList)
+        {
+            asyncwrapper.iimage = null;
+            string uriString;
+            if (uriList[0] != null)
+            {
+                foreach (Uri item in uriList)
+                {
+                    uriString = item.ToString();
+                    if (LinkHasExtension(uriString))
+                    {
+                        if (uriString.Contains(".jpg"))
+                        {
+
+                        }
+                        else if (uriString.Contains(".png"))
+                        {
+
+                        }
+                        else
+                        {
+                            DebugLog.Text += $"No suitable extension found for {uriString} link! \n";
+                        }
+                    }
+                    else if (LinkIsAlbum(uriString))
+                    {
+                        uriString = uriString.Substring(uriString.LastIndexOf('/') + 1);
+                        asyncwrapper.dosomething(ImgurClientID, uriString);
+                        albumImageList = asyncwrapper.iimage;
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+        }
+        public bool LinkHasExtension(string uriString)
+        {
+            if (uriString.Contains(".jpg") || uriString.Contains(".png"))
+            {
+                return true;
+            }
+            return false;
+        }
+        public bool LinkIsAlbum(string uriString)
+        {
+            if (uriString.Contains("/a/"))
+            {
+                return true;
+            }
+            return false;
         }
         public void DownloadImageWithExtension(Uri url, ImageFormat format)
         {
@@ -91,38 +146,8 @@ namespace RedditImageDownloader
             {
                 //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
                 //OR 
-                client.DownloadFileAsync(url, @"c:\\Users\Tomats\Desktop\Wallpapers\pic.jpg");
+                client.DownloadFileAsync(url, $@"c:\\Users\Tomats\Desktop\Wallpapers\{url}.{format}");
             }
-        }
-        public void DownloadImageWithoutExtension(string filename, ImageFormat format, Uri imageUrl)
-        {
-            //SaveImage("--- Any Image Path ---", ImageFormat.Png, Url)
-            try
-            {
-                WebClient client = new WebClient();
-                Stream stream = client.OpenRead(imageUrl);
-                Bitmap bitmap; bitmap = new Bitmap(stream);
-
-                if (bitmap != null)
-                    bitmap.Save(filename, format);
-
-                stream.Flush();
-                stream.Close();
-                client.Dispose();
-
-            }
-            catch (ExternalException e)
-            {
-                DebugLog.Text += $"{e} \n";
-                //Something is wrong with Format -- Maybe required Format is not 
-                // applicable here
-            }
-            catch (ArgumentNullException e)
-            {
-                DebugLog.Text += $"{e} \n";
-                //Something wrong with Stream
-            }
-            
         }
         public bool CheckSubreddit(string name)
         {
