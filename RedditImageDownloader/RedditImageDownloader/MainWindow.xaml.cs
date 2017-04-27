@@ -37,15 +37,14 @@ namespace RedditImageDownloader
         FromTime fromtime;
         List<Uri> imageUrlList = new List<Uri>();
         List<IImage> albumImageList = new List<IImage>();
-        AsyncWrapper asyncwrapper = new AsyncWrapper();
+        List<IImage> galleryImageList = new List<IImage>();
+        int counterrr;
         string ImgurClientID = "04cc5217fd576cb";
         public MainWindow()
         {
             //Redesign with asynchronous in mind
-            //Need to create seperate tasks, not overwrite current one
             //implement filtering by .png .jpg /a/ (albums) etc
             InitializeComponent();
-            asyncwrapper.NewLinksFromImgurAlbum += UpdateImageLinksList_NewLinksFromImgurAlbum;
         }
         public void GetTopLinks(string name, FromTime ft, int howMany)
         {
@@ -92,7 +91,6 @@ namespace RedditImageDownloader
         }
         public void TheGreatImageFilter(List<Uri> uriList)
         {
-            asyncwrapper.iimage = null;
             string uriString;
             if (uriList[0] != null)
             {
@@ -109,19 +107,26 @@ namespace RedditImageDownloader
                         {
                             DebugLog.Text += "PNG PICTURE \n";
                         }
-                        else
-                        {
-                            DebugLog.Text += $"No suitable extension found for {uriString} link! \n";
-                        }
                     }
                     else if (LinkIsAlbum(uriString))
                     {
+                        DebugLog.Text += "New album detected! \n";
                         uriString = uriString.Substring(uriString.LastIndexOf('/') + 1);
-                        asyncwrapper.FindImagesInAlbum(ImgurClientID, uriString);
+                        ImgurAlbumAsyncWrapper imgurAlbumAsyncWrapper = new ImgurAlbumAsyncWrapper();
+                        imgurAlbumAsyncWrapper.NewLinksFromImgurAlbum += UpdateImageLinksList_NewLinksFromImgurAlbum;
+                        imgurAlbumAsyncWrapper.FindImagesInAlbumAsync(ImgurClientID, uriString);
+                    }
+                    else if (LinkIsGallery(uriString))
+                    {
+                        DebugLog.Text += "New gallery detected! \n";
+                        uriString = uriString.Substring(uriString.LastIndexOf('/') + 1);
+                        ImgurGalleryAsyncWrapper imgurGalleryAsyncWrapper = new ImgurGalleryAsyncWrapper();
+                        imgurGalleryAsyncWrapper.NewLinksFromImgurGallery += UpdateImageLinksList_NewLinksFromImgurGallery;
+                        imgurGalleryAsyncWrapper.FindImagesInGalleryAsync(ImgurClientID, uriString);
                     }
                     else
                     {
-                        DebugLog.Text += "The link is in invalid format! \n";
+                        DebugLog.Text += $"The link is in invalid format! - {item}\n";
                     }
                 }
             }
@@ -137,6 +142,14 @@ namespace RedditImageDownloader
         public bool LinkIsAlbum(string uriString)
         {
             if (uriString.Contains("/a/"))
+            {
+                return true;
+            }
+            return false;
+        }
+        public bool LinkIsGallery(string uriString)
+        {
+            if (uriString.Contains("/gallery/"))
             {
                 return true;
             }
@@ -252,35 +265,50 @@ namespace RedditImageDownloader
         {
             this.Dispatcher.Invoke(() =>
             {
-                albumImageList = iimageList;
+                counterrr = 1;
+                DebugLog.Text += "New range added\n";
+                albumImageList.AddRange(iimageList);
                 foreach (var item in albumImageList)
                 {
-                    DebugLog.Text += "I ALSO HERE \n";
+                    //DebugLog.Text += $"{item.Link} - {counterrr}\n";
+                    counterrr++;
+                }
+            });
+        }
+        void UpdateImageLinksList_NewLinksFromImgurGallery(List<IImage> iimageList)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                counterrr = 1;
+                DebugLog.Text += "New Gallery Links Added\n";
+                galleryImageList.AddRange(iimageList);
+                foreach (var item in albumImageList)
+                {
+                    //DebugLog.Text += $"{item.Link} - {counterrr}\n";
+                    counterrr++;
                 }
             });
         }
     }
     public delegate void NewLinksFromImgurAlbumDelegate(List<IImage> iimageList);
    
-    public class AsyncWrapper
+    public class ImgurAlbumAsyncWrapper
     {
         public List<IImage> iimage;
         string token;
         string albumlink;
         public event NewLinksFromImgurAlbumDelegate NewLinksFromImgurAlbum;
-        public void FindImagesInAlbum(string token, string albumlink)
+        public async void FindImagesInAlbumAsync(string token, string albumlink)
         {
             this.token = token;
             this.albumlink = albumlink;
-            Task task = new Task(dosomething);
-            task.Start();
-        }
-        public async void dosomething()
-        {
-            Task<IEnumerable<IImage>> getImages = AccessTheWebAsync();
-            IEnumerable<IImage> image = await getImages;
-            iimage = image.ToList();
+            iimage = await Task.Run(GetIenumerableIImagesAsync);
             NewLinksFromImgurAlbum(iimage);
+        }
+        public async Task<List<IImage>> GetIenumerableIImagesAsync()
+        {
+            IEnumerable<IImage> image = await Task.Run(AccessTheWebAsync);
+            return image.ToList();
         }
         async Task<IEnumerable<IImage>> AccessTheWebAsync()
         {
@@ -288,6 +316,42 @@ namespace RedditImageDownloader
             var endpoint = new AlbumEndpoint(client);
             var images = await endpoint.GetAlbumImagesAsync(albumlink);
             return images;
+        }
+    }
+    public delegate void NewLinksFromImgurGalleryDelegate(List<IImage> iimageList);
+    public class ImgurGalleryAsyncWrapper
+    {
+        public List<IImage> iimage;
+        public List<IImage> iimage2;
+        string token;
+        string gallerylink;
+        public event NewLinksFromImgurGalleryDelegate NewLinksFromImgurGallery;
+        public async void FindImagesInGalleryAsync(string token, string gallerylink)
+        {
+            //Using try and catch because sometimes the gallery doesn't have an album inside it. No idea how to get the Images then.
+            try
+            {
+                this.token = token;
+                this.gallerylink = gallerylink;
+                iimage = await Task.Run(GetIenumerableIImagesAsync);
+                NewLinksFromImgurGallery(iimage);
+            }
+            catch
+            {
+
+            }
+        }
+        public async Task<List<IImage>> GetIenumerableIImagesAsync()
+        {
+            IEnumerable<IImage> image = await Task.Run(AccessTheWebAsync);
+            return image.ToList(); ;
+        }
+        async Task<IEnumerable<IImage>> AccessTheWebAsync()
+        {
+            var client = new ImgurClient(token);
+            var endpoint = new GalleryEndpoint(client);
+            var images = await endpoint.GetGalleryAlbumAsync(gallerylink);
+            return images.Images;
         }
     }
 }
