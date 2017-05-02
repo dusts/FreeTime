@@ -36,9 +36,8 @@ namespace RedditImageDownloader
         SolidColorBrush black = new SolidColorBrush(Colors.Black);
         FromTime fromtime;
         List<Uri> imageUrlList = new List<Uri>();
-        List<IImage> albumImageList = new List<IImage>();
-        List<IImage> galleryImageList = new List<IImage>();
-        int counterrr;
+        List<IImage> imageLinkList = new List<IImage>();
+        int counter;
         string ImgurClientID = "04cc5217fd576cb";
         public MainWindow()
         {
@@ -50,7 +49,7 @@ namespace RedditImageDownloader
         {
             DebugLog.Text += $"Searching {name} for {howMany} top posts from past {ft} ago\n";
             Reddit reddit = new Reddit();
-            var subreddit = reddit.GetSubreddit(name);
+            Subreddit subreddit = reddit.GetSubreddit(name);
             int count = 1;
             int newItems = 0;
             foreach (var post in subreddit.GetTop(ft))
@@ -66,7 +65,7 @@ namespace RedditImageDownloader
                     }
                     if (count > howMany)
                     {
-                        DebugLog.Text += $"Found {newItems} new items!";
+                        DebugLog.Text += $"Found {newItems} new items!\n";
                         break;
                     }
                 }
@@ -108,7 +107,7 @@ namespace RedditImageDownloader
                             DebugLog.Text += "PNG PICTURE \n";
                         }
                     }
-                    else if (LinkIsAlbum(uriString))
+                    else if (LinkIsImgurAlbum(uriString))
                     {
                         DebugLog.Text += "New album detected! \n";
                         uriString = uriString.Substring(uriString.LastIndexOf('/') + 1);
@@ -116,13 +115,21 @@ namespace RedditImageDownloader
                         imgurAlbumAsyncWrapper.NewLinksFromImgurAlbum += UpdateImageLinksList_NewLinksFromImgurAlbum;
                         imgurAlbumAsyncWrapper.FindImagesInAlbumAsync(ImgurClientID, uriString);
                     }
-                    else if (LinkIsGallery(uriString))
+                    else if (LinkIsImgurGallery(uriString))
                     {
                         DebugLog.Text += "New gallery detected! \n";
                         uriString = uriString.Substring(uriString.LastIndexOf('/') + 1);
                         ImgurGalleryAsyncWrapper imgurGalleryAsyncWrapper = new ImgurGalleryAsyncWrapper();
                         imgurGalleryAsyncWrapper.NewLinksFromImgurGallery += UpdateImageLinksList_NewLinksFromImgurGallery;
                         imgurGalleryAsyncWrapper.FindImagesInGalleryAsync(ImgurClientID, uriString);
+                    }
+                    else if (LinkIsImgurImage(uriString))
+                    {
+                        DebugLog.Text += "New image detected! \n";
+                        uriString = uriString.Substring(uriString.LastIndexOf('/') + 1);
+                        ImgurImageAsyncWrapper imgurGalleryAsyncWrapper = new ImgurImageAsyncWrapper();
+                        imgurGalleryAsyncWrapper.NewLinksFromImgurImage += UpdateImageLinksList_NewLinkFromImgurImage;
+                        imgurGalleryAsyncWrapper.FindImageInLinkAsync(ImgurClientID, uriString);
                     }
                     else
                     {
@@ -139,7 +146,7 @@ namespace RedditImageDownloader
             }
             return false;
         }
-        public bool LinkIsAlbum(string uriString)
+        public bool LinkIsImgurAlbum(string uriString)
         {
             if (uriString.Contains("/a/"))
             {
@@ -147,13 +154,22 @@ namespace RedditImageDownloader
             }
             return false;
         }
-        public bool LinkIsGallery(string uriString)
+        public bool LinkIsImgurGallery(string uriString)
         {
             if (uriString.Contains("/gallery/"))
             {
                 return true;
             }
             return false;
+        }
+        public bool LinkIsImgurImage(string uriString)
+        {
+            if (uriString.Contains("imgur"))
+            {
+                return true;
+            }
+            return false;
+
         }
         public void DownloadImageWithExtension(Uri url, ImageFormat format)
         {
@@ -164,25 +180,25 @@ namespace RedditImageDownloader
                 client.DownloadFileAsync(url, $@"c:\\Users\Tomats\Desktop\Wallpapers\{url}.{format}");
             }
         }
-        public bool CheckSubreddit(string name)
+        public async Task<bool> CheckSubredditAsync(string name)
         {
             try
             {
                 Reddit reddit = new Reddit();
-                var subreddit = reddit.GetSubreddit(name);
+                Subreddit subreddit = await reddit.GetSubredditAsync(name);
                 var post = subreddit.New.Take(1);
                 return true;
             }
-            catch (Exception)
+            catch 
             {
                 return false;
             }
         }
-        private void btn_CheckSubreddit_Click(object sender, RoutedEventArgs e)
+        private async void btn_CheckSubreddit_Click(object sender, RoutedEventArgs e)
         {
+            btn_CheckSubreddit.IsEnabled = false;
             string newText = textB_SubredditInput.Text;
-            
-            if (CheckSubreddit(newText))
+            if (await CheckSubredditAsync(newText))
             {
                 btn_CheckSubreddit.Content = "Exists";
                 btn_CheckSubreddit.Foreground = green;
@@ -192,6 +208,7 @@ namespace RedditImageDownloader
                 btn_CheckSubreddit.Content = "Doesn't Exist";
                 btn_CheckSubreddit.Foreground = red;
             }
+            btn_CheckSubreddit.IsEnabled = true;
         }
 
         private void textB_SubredditInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -205,7 +222,6 @@ namespace RedditImageDownloader
                     btn_CheckSubreddit.Content = "Check Again";
                 }
             }
-            
         }
 
         private void slider_PostCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -261,34 +277,50 @@ namespace RedditImageDownloader
                     break;
             }
         }
+        #region Update Debug.Text Methods
         void UpdateImageLinksList_NewLinksFromImgurAlbum(List<IImage> iimageList)
         {
             this.Dispatcher.Invoke(() =>
             {
-                counterrr = 1;
-                DebugLog.Text += "New range added\n";
-                albumImageList.AddRange(iimageList);
-                foreach (var item in albumImageList)
-                {
-                    //DebugLog.Text += $"{item.Link} - {counterrr}\n";
-                    counterrr++;
-                }
+                counter = 1;
+                DebugLog.Text += "New Album Links Added\n";
+                imageLinkList.AddRange(iimageList);
+                //foreach (var item in albumImageList)
+                //{
+                //    DebugLog.Text += $"{item.Link} - {counter}\n";
+                //    counter++;
+                //}
             });
         }
         void UpdateImageLinksList_NewLinksFromImgurGallery(List<IImage> iimageList)
         {
             this.Dispatcher.Invoke(() =>
             {
-                counterrr = 1;
+                counter = 1;
                 DebugLog.Text += "New Gallery Links Added\n";
-                galleryImageList.AddRange(iimageList);
-                foreach (var item in albumImageList)
-                {
-                    //DebugLog.Text += $"{item.Link} - {counterrr}\n";
-                    counterrr++;
-                }
+                imageLinkList.AddRange(iimageList);
+                //foreach (var item in albumImageList)
+                //{
+                //    DebugLog.Text += $"{item.Link} - {counter}\n";
+                //    counter++;
+                //}
             });
         }
+        void UpdateImageLinksList_NewLinkFromImgurImage(IImage iimageList)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                counter = 1;
+                DebugLog.Text += "New Image Link Added\n";
+                imageLinkList.Add(iimageList);
+                //foreach (var item in albumImageList)
+                //{
+                //    DebugLog.Text += $"{item.Link} - {counter}\n";
+                //    counter++;
+                //}
+            });
+        }
+        #endregion
     }
     public delegate void NewLinksFromImgurAlbumDelegate(List<IImage> iimageList);
    
@@ -352,6 +384,26 @@ namespace RedditImageDownloader
             var endpoint = new GalleryEndpoint(client);
             var images = await endpoint.GetGalleryAlbumAsync(gallerylink);
             return images.Images;
+        }
+    }
+    public delegate void NewLinkFromImgurImageDelegate(IImage iimage);
+    public class ImgurImageAsyncWrapper
+    {
+        string token;
+        string gallerylink;
+        public event NewLinkFromImgurImageDelegate NewLinksFromImgurImage;
+        public async void FindImageInLinkAsync(string token, string gallerylink)
+        {
+            this.token = token;
+            this.gallerylink = gallerylink;
+            NewLinksFromImgurImage(await Task.Run(AccessTheWebAsync));
+        }
+        async Task<IImage> AccessTheWebAsync()
+        {
+            var client = new ImgurClient(token);
+            var endpoint = new ImageEndpoint(client);
+            var images = await endpoint.GetImageAsync(gallerylink);
+            return images;
         }
     }
 }

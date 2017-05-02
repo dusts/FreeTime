@@ -21,7 +21,7 @@
                         <ListBoxItem>All</ListBoxItem>
                     </ListBox>
                     <Label x:Name="label_ListBox_FromTime" Content="Sort Top By" Margin="11,93,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26" Width="71"/>
-                    <Slider x:Name="slider_PostCount" Margin="82,171,0,0" Maximum="500" Minimum="1" SmallChange="0" ValueChanged="slider_PostCount_ValueChanged" TickPlacement="Both" IsSnapToTickEnabled="True" HorizontalAlignment="Left" VerticalAlignment="Top" Width="132" Height="30"/>
+                    <Slider x:Name="slider_PostCount" Margin="82,171,0,0" Maximum="100" Minimum="1" SmallChange="0" ValueChanged="slider_PostCount_ValueChanged" TickPlacement="Both" IsSnapToTickEnabled="True" HorizontalAlignment="Left" VerticalAlignment="Top" Width="132" Height="30"/>
                     <Label x:Name="label_PostCount_Text" Content="How Many Posts To Find" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="79,118,0,0" Height="26" Width="141"/>
                     <Label x:Name="label_PostCount_Number" Content="1" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="130,143,0,0" RenderTransformOrigin="1.75,0.462" Width="39" Height="26"/>
                     <Button x:Name="btn_SearchSubreddit" Content="Search!" Height="40" Click="btn_SearchSubreddit_Click" VerticalAlignment="Top" Margin="265,58,0,0" HorizontalAlignment="Left" Width="87"/>
